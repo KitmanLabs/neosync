@@ -176,7 +176,7 @@ export function getCreateNewSingleTableAiGenerateJobRequest(
     transformer: dummyTransformer,
   });
 
-  const request = create(CreateJobRequestSchema, {
+  return create(CreateJobRequestSchema, {
     accountId,
     jobName: values.define.jobName,
     cronSchedule: values.define.cronSchedule,
@@ -189,14 +189,6 @@ export function getCreateNewSingleTableAiGenerateJobRequest(
     ),
     workflowOptions: toWorkflowOptions(values.define.workflowSettings),
   });
-
-  console.log('AI Generate Job Request:', {
-    mappingsCount: request.mappings?.length,
-    mappings: request.mappings,
-    source: request.source,
-  });
-
-  return request;
 }
 
 export function getSampleAiGeneratedRecordsRequest(
