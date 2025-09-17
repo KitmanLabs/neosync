@@ -58,6 +58,7 @@ import {
   GenerateSourceOptionsSchema,
   GenerateSourceSchemaOptionSchema,
   GenerateSourceTableOptionSchema,
+  GenerateInt64Schema,
   GenerateStringSchema,
   GetAiGeneratedDataRequest,
   GetAiGeneratedDataRequestSchema,
@@ -155,20 +156,47 @@ export function getCreateNewSingleTableAiGenerateJobRequest(
   accountId: string,
   getConnectionById: GetConnectionById
 ): CreateJobRequest {
-  return create(CreateJobRequestSchema, {
+  // Create a dummy mapping for AI Generate to satisfy backend validation
+  // The backend requires at least one mapping when jobType is not set
+  const dummyTransformer = convertJobMappingTransformerFormToJobMappingTransformer({
+    source: 'generate',
+    config: {
+      case: 'generateInt64Config',
+      value: {
+        min: 1,
+        max: 1000000,
+      },
+    },
+  });
+
+  const dummyMapping = create(JobMappingSchema, {
+    schema: values.schema.schema,
+    table: values.schema.table,
+    column: 'id', // dummy column
+    transformer: dummyTransformer,
+  });
+
+  const request = create(CreateJobRequestSchema, {
     accountId,
     jobName: values.define.jobName,
     cronSchedule: values.define.cronSchedule,
     initiateJobRun: values.define.initiateJobRun,
-    mappings: [],
+    mappings: [dummyMapping], // Dummy mapping to satisfy backend validation
     source: toSingleTableAiGenerateJobSource(values),
     destinations: toSingleTableGenerateCreateJobDestinations(
       values,
       getConnectionById
     ),
     workflowOptions: toWorkflowOptions(values.define.workflowSettings),
-    syncOptions: toSyncOptions(values),
   });
+
+  console.log('AI Generate Job Request:', {
+    mappingsCount: request.mappings?.length,
+    mappings: request.mappings,
+    source: request.source,
+  });
+
+  return request;
 }
 
 export function getSampleAiGeneratedRecordsRequest(
